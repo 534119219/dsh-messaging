@@ -208,9 +208,18 @@ export function apply(ctx) {
       sel = defaults && typeof defaults.currentSelection === 'function' ? defaults.currentSelection() : null
     } catch { /* ignore */ }
     const connected = [...adapters.values()].filter((a) => a.connected).map((a) => a.id)
+    // Title first (live session title, else cached history title), falling
+    // back to 未命名; the raw session id is intentionally not shown.
+    let title = sessionTitleOf(agent)
+    if (!title) {
+      const hist = sessionMap.historyFor(chatKey)
+      const current = hist[hist.length - 1]
+      title = current && current.title ? current.title : ''
+    }
+    if (title) sessionMap.setHistoryTitle(chatKey, sessionId, title)
     const lines = [
       '📊 消息平台状态',
-      `🆔 会话：${sessionId}`,
+      `📝 标题：${title || '未命名'}`,
       `📱 平台：${platform}${entry && entry.chatId ? ` · ${entry.chatId}` : ''}`,
     ]
     if (entry && entry.userId) lines.push(`👤 用户：${entry.userId}`)
@@ -225,25 +234,6 @@ export function apply(ctx) {
     lines.push(`🔌 已连接平台：${connected.length ? connected.join(', ') : '（无）'}`)
     lines.push(`📂 工作区：${agentManager.workspaceFor(platform)}`)
     return lines.join('\n')
-  }
-
-  /** /compress — manual context compaction via ctx.compaction.compactNow. */
-  async function runCompress(sessionId) {
-    const compaction = ctx.get && ctx.get('compaction')
-    const agent = liveAgent(sessionId)
-    if (!compaction || typeof compaction.compactNow !== 'function') return '⚠️ 当前环境不支持手动压缩。'
-    if (!agent) return '⚠️ 会话尚未创建，请先发一条消息。'
-    if (agent.status === 'running') return '⏳ Agent 正在运行，请稍后再压缩。'
-    try {
-      const result = await compaction.compactNow(agent, new AbortController().signal)
-      if (!result) return '📭 没有可压缩的内容。'
-      const shadowed = Array.isArray(result.shadowedSeqs) ? result.shadowedSeqs.length : '?'
-      const tokens = result.shadowedTokenCount !== undefined ? result.shadowedTokenCount : '?'
-      return `✅ 已压缩：遮蔽 ${shadowed} 条消息，节省约 ${tokens} tokens。`
-    } catch (error) {
-      if (error && error.code === 'busy') return '⏳ 压缩正在进行中，请稍候。'
-      return `⚠️ 压缩失败：${error.message || String(error)}`
-    }
   }
 
   const api = {
@@ -366,12 +356,9 @@ export function apply(ctx) {
           } else if (cmd === '/status') {
             rec('slash-status')
             reply = await runStatus(platform, event.chatKey, sessionId)
-          } else if (cmd === '/compress') {
-            rec('slash-compress')
-            reply = await runCompress(sessionId)
           } else {
             rec('slash-unknown')
-            reply = `未知命令：${cmd}（支持 /new /stop /title /resume /status /compress）`
+            reply = `未知命令：${cmd}（支持 /new /stop /title /resume /status）`
           }
           await adapter.send(target, reply)
           return
