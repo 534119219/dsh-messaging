@@ -26,9 +26,9 @@ window.__ModuleLoader__.load({
       // The sidebar trigger clones the New Session button (native look and
       // collapse behavior); only the dialog needs custom styles.
       '.dshm-panel{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;' +
-      'background:rgba(0,0,0,.5);font-size:13px}' +
+      'background:var(--dsw-alias-bg-mask-2,rgba(0,0,0,.5));font-size:13px}' +
       '.dshm-box{box-sizing:border-box;width:min(860px,94vw);height:min(600px,90vh);display:flex;flex-direction:column;' +
-      'background:var(--dsw-alias-bg,#161a24);border:1px solid var(--dsw-alias-border-l2,#3a3f4b);border-radius:16px;' +
+      'background:var(--dsw-alias-bg-layer-1,#161a24);border:1px solid var(--dsw-alias-border-l2,#3a3f4b);border-radius:16px;' +
       'box-shadow:0 24px 64px rgba(0,0,0,.45);overflow:hidden}' +
       '.dshm-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;font-size:14px;font-weight:600;' +
       'border-bottom:1px solid var(--dsw-alias-border-l1,#262b36)}' +
@@ -37,7 +37,7 @@ window.__ModuleLoader__.load({
       '.dshm-plat{box-sizing:border-box;width:100%;text-align:left;cursor:pointer;padding:8px 10px;border-radius:10px;' +
       'border:1px solid transparent;background:transparent;color:inherit;display:flex;align-items:center;gap:8px;margin-bottom:4px}' +
       '.dshm-plat:hover{background:var(--dsw-alias-interactive-bg-hover,#262c3c)}' +
-      '.dshm-plat[data-active="true"]{border-color:var(--dsw-alias-border-l2,#3a3f4b);background:var(--dsw-alias-interactive-bg,#1d2230)}' +
+      '.dshm-plat[data-active="true"]{border-color:var(--dsw-alias-button-ghost-active-border,#3a3f4b);background:var(--dsw-alias-button-ghost-active-fill,#1d2230)}' +
       '.dshm-dot{width:8px;height:8px;border-radius:50%;flex:none}' +
       '.dshm-dot[data-state="on"]{background:var(--dsw-alias-state-success-primary,#3fb950)}' +
       '.dshm-dot[data-state="off"]{background:var(--dsw-alias-state-error-primary,#f85149)}' +
@@ -45,15 +45,15 @@ window.__ModuleLoader__.load({
       '.dshm-field{margin-bottom:12px}' +
       '.dshm-label{font-size:12px;color:var(--dsw-alias-label-secondary,#a8adba);margin-bottom:4px}' +
       '.dshm-input,.dshm-textarea,.dshm-select{box-sizing:border-box;width:100%;padding:7px 10px;font-size:13px;color:inherit;' +
-      'background:var(--dsw-alias-input-bg,#11151d);border:1px solid var(--dsw-alias-border-l2,#3a3f4b);border-radius:8px}' +
+      'background:var(--dsw-alias-bg-layer-2,#11151d);border:1px solid var(--dsw-alias-border-l2,#3a3f4b);border-radius:8px}' +
       '.dshm-textarea{min-height:110px;resize:vertical;font-family:ui-monospace,monospace;font-size:12px}' +
       '.dshm-note{font-size:12px;color:var(--dsw-alias-label-tertiary,#8a8f9d);margin-bottom:12px;line-height:1.5}' +
       '.dshm-savebar{display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:12px 16px;' +
       'border-top:1px solid var(--dsw-alias-border-l1,#262b36)}' +
       '.dshm-btn{padding:6px 16px;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid var(--dsw-alias-border-l2,#3a3f4b);' +
-      'background:var(--dsw-alias-interactive-bg,#1d2230);color:inherit}' +
-      '.dshm-btn:hover{background:var(--dsw-alias-interactive-bg-hover,#262c3c)}' +
-      '.dshm-btn[data-primary="true"]{background:var(--dsw-alias-brand-primary,#3b82f6);border-color:var(--dsw-alias-brand-primary,#3b82f6);color:#fff}' +
+      'background:var(--dsw-alias-button-floating-fill,#1d2230);color:inherit}' +
+      '.dshm-btn:hover{background:var(--dsw-alias-button-floating-hover,#262c3c)}' +
+      '.dshm-btn[data-primary="true"]{background:var(--dsw-alias-button-primary-fill,#3b82f6);border-color:var(--dsw-alias-button-primary-fill,#3b82f6);color:var(--dsw-alias-label-primary-foreground,#fff)}' +
       '.dshm-msg{font-size:12px;color:var(--dsw-alias-state-success-primary,#3fb950)}' +
       '.dshm-err{font-size:12px;color:var(--dsw-alias-state-error-primary,#f85149)}' +
       '.dshm-close{background:none;border:none;color:var(--dsw-alias-label-secondary,#a8adba);font-size:18px;cursor:pointer;padding:2px 8px}' +
@@ -559,7 +559,7 @@ window.__ModuleLoader__.load({
               fallbackLabel.textContent = "消息平台";
               if (!hasLabel) fallbackLabel.style.display = "none";
               el.appendChild(fallbackLabel);
-              el.style.cssText = "box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:6px;height:38px;margin:0 2px 8px;padding:8px 16px;border:1px solid var(--dsw-alias-border-l2,#3a3f4b);border-radius:12px;font-size:14px;font-weight:500;line-height:22px;cursor:pointer;background:var(--dsw-alias-interactive-bg,#1d2230);color:inherit";
+              el.style.cssText = "box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:6px;height:38px;margin:0 2px 8px;padding:8px 16px;border:1px solid var(--dsw-alias-border-l2,#3a3f4b);border-radius:12px;font-size:14px;font-weight:500;line-height:22px;cursor:pointer;background:var(--dsw-alias-button-floating-fill,#1d2230);color:inherit";
             } else {
               el.removeAttribute("onclick");
               // Replace the visible label text with our own while keeping the
