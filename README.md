@@ -16,7 +16,7 @@
 
 | 侧栏消息平台入口 | 消息平台配置弹窗 |
 | :---: | :---: |
-| <img src="assets/sidebar.png" width="420" alt="侧栏消息平台入口"> | <img src="assets/dialog.png" width="420" alt="消息平台配置弹窗"> |
+| <img src="assets/sidebar.png" width="278" alt="侧栏消息平台入口"> | <img src="assets/dialog.png" width="420" alt="消息平台配置弹窗"> |
 
 ## 安装（web profile）
 
