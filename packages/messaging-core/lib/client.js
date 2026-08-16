@@ -39,6 +39,8 @@ window.__ModuleLoader__.load({
       '.dshm-plat:hover{background:var(--dsw-alias-interactive-bg-hover,#262c3c)}' +
       '.dshm-plat[data-active="true"]{border-color:var(--dsw-alias-border-l2,#3a3f4b);background:var(--dsw-alias-interactive-bg,#1d2230)}' +
       '.dshm-dot{width:8px;height:8px;border-radius:50%;flex:none}' +
+      '.dshm-dot[data-state="on"]{background:var(--dsw-alias-state-success-primary,#3fb950)}' +
+      '.dshm-dot[data-state="off"]{background:var(--dsw-alias-state-error-primary,#f85149)}' +
       '.dshm-content{flex:1;min-width:0;overflow-y:auto;padding:16px 20px}' +
       '.dshm-field{margin-bottom:12px}' +
       '.dshm-label{font-size:12px;color:var(--dsw-alias-label-secondary,#a8adba);margin-bottom:4px}' +
@@ -51,15 +53,15 @@ window.__ModuleLoader__.load({
       '.dshm-btn{padding:6px 16px;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid var(--dsw-alias-border-l2,#3a3f4b);' +
       'background:var(--dsw-alias-interactive-bg,#1d2230);color:inherit}' +
       '.dshm-btn:hover{background:var(--dsw-alias-interactive-bg-hover,#262c3c)}' +
-      '.dshm-btn[data-primary="true"]{background:#3b82f6;border-color:#3b82f6;color:#fff}' +
-      '.dshm-msg{font-size:12px;color:#3fb950}' +
-      '.dshm-err{font-size:12px;color:#f2a1a1}' +
+      '.dshm-btn[data-primary="true"]{background:var(--dsw-alias-brand-primary,#3b82f6);border-color:var(--dsw-alias-brand-primary,#3b82f6);color:#fff}' +
+      '.dshm-msg{font-size:12px;color:var(--dsw-alias-state-success-primary,#3fb950)}' +
+      '.dshm-err{font-size:12px;color:var(--dsw-alias-state-error-primary,#f85149)}' +
       '.dshm-close{background:none;border:none;color:var(--dsw-alias-label-secondary,#a8adba);font-size:18px;cursor:pointer;padding:2px 8px}' +
       '.dshm-qr{display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px 0;text-align:center}' +
       '.dshm-qr img{background:#fff;border-radius:12px;padding:8px;image-rendering:pixelated}' +
       '.dshm-qr-status{font-size:13px;color:var(--dsw-alias-label-primary,#e6e9f0);min-height:20px}' +
       '.dshm-qr-actions{display:flex;gap:10px}' +
-      '.dshm-qr-start{margin-bottom:14px;border-color:#3b82f6;color:#7ab0ff}' +
+      '.dshm-qr-start{margin-bottom:14px;border-color:var(--dsw-alias-brand-primary,#3b82f6);color:var(--dsw-alias-brand-primary,#7ab0ff)}' +
       '</style>';
 
     if (!document.querySelector("[data-dsh-msg-css]")) {
@@ -335,14 +337,14 @@ window.__ModuleLoader__.load({
             h("div", { className: "dshm-list" },
               platformIds.map(function (id) {
                 var isActive = id === platformId;
-                var dotColor = connectedMap[id] === true ? "#3fb950" : "#f85149";
+                var isOn = connectedMap[id] === true;
                 return h("button", {
                   key: id,
                   className: "dshm-plat",
                   "data-active": String(isActive),
                   onClick: function () { setPlatformId(id); setNotice(null); setQr(null); },
                 },
-                  h("span", { className: "dshm-dot", style: { background: dotColor } }),
+                  h("span", { className: "dshm-dot", "data-state": isOn ? "on" : "off" }),
                   h("span", null, payload.platforms[id].label)
                 );
               })
