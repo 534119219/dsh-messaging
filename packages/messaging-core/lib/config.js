@@ -42,7 +42,10 @@ export const PLATFORM_CATALOG = {
       { key: 'useTls', label: 'TLS', type: 'bool', default: true },
       { key: 'nickname', label: '昵称', env: 'IRC_NICKNAME', default: 'dsh-bot' },
       { key: 'channel', label: '频道（如 #general）', env: 'IRC_CHANNEL' },
+      { key: 'serverPassword', label: '服务器密码（可选）', secret: true },
       { key: 'nickservPassword', label: 'NickServ 密码', secret: true },
+      { key: 'allowedUsers', label: '允许的 user id（逗号分隔）', type: 'list' },
+      { key: 'allowAll', label: '允许所有人', type: 'bool', default: false },
     ],
   },
   ntfy: {
@@ -65,6 +68,9 @@ export const PLATFORM_CATALOG = {
       { key: 'smtpPort', label: 'SMTP 端口', type: 'number', default: 587 },
       { key: 'address', label: '邮箱地址', env: 'EMAIL_ADDRESS', required: true },
       { key: 'password', label: '密码/应用专用密码', env: 'EMAIL_PASSWORD', secret: true, required: true },
+      { key: 'pollInterval', label: '轮询间隔（分钟）', type: 'number', default: 15 },
+      { key: 'allowedUsers', label: '允许的发件人邮箱（逗号分隔）', type: 'list' },
+      { key: 'allowAll', label: '允许所有人', type: 'bool', default: false },
     ],
   },
   matrix: {
@@ -74,6 +80,8 @@ export const PLATFORM_CATALOG = {
       { key: 'accessToken', label: 'Access token（或下方 user/password）', env: 'MATRIX_ACCESS_TOKEN', secret: true },
       { key: 'user', label: '登录名', env: 'MATRIX_USER' },
       { key: 'password', label: '密码', env: 'MATRIX_PASSWORD', secret: true },
+      { key: 'allowedUsers', label: '允许的 user id（逗号分隔）', type: 'list' },
+      { key: 'allowAll', label: '允许所有人', type: 'bool', default: false },
     ],
   },
   homeassistant: {
@@ -92,6 +100,7 @@ export const PLATFORM_CATALOG = {
       { key: 'httpUrl', label: 'signal-cli HTTP 地址', default: 'http://127.0.0.1:8080' },
       { key: 'account', label: '账号（手机号）', env: 'SIGNAL_ACCOUNT', required: true },
       { key: 'allowedUsers', label: '允许的号码（逗号分隔）', type: 'list' },
+      { key: 'allowAll', label: '允许所有人', type: 'bool', default: false },
     ],
   },
   whatsapp: {
@@ -110,6 +119,8 @@ export const PLATFORM_CATALOG = {
     fields: [
       { key: 'appId', label: 'App ID', env: 'FEISHU_APP_ID', required: true },
       { key: 'appSecret', label: 'App Secret', env: 'FEISHU_APP_SECRET', secret: true, required: true },
+      { key: 'allowedUsers', label: '允许的 user id（逗号分隔）', type: 'list' },
+      { key: 'allowAll', label: '允许所有人', type: 'bool', default: false },
     ],
   },
   mattermost: {
@@ -118,6 +129,9 @@ export const PLATFORM_CATALOG = {
       { key: 'url', label: '服务器 URL', env: 'MATTERMOST_URL', required: true },
       { key: 'token', label: 'Bot token', env: 'MATTERMOST_TOKEN', secret: true, required: true },
       { key: 'requireMention', label: '频道需 @提及', type: 'bool', default: true },
+      { key: 'allowedUsers', label: '允许的 user id（逗号分隔）', type: 'list' },
+      { key: 'allowAll', label: '允许所有人', type: 'bool', default: false },
+      { key: 'freeResponseChannels', label: '无需 @ 即可回复的频道（逗号分隔）', type: 'list' },
     ],
   },
   qq: {
@@ -139,6 +153,9 @@ export const PLATFORM_CATALOG = {
       { key: 'channelAccessToken', label: 'Channel Access Token', secret: true, required: true },
       { key: 'channelSecret', label: 'Channel Secret', secret: true, required: true },
       { key: 'publicUrl', label: '公网回调地址（如 https://bot.example.com）' },
+      { key: 'allowedUsers', label: '允许的 user id（逗号分隔）', type: 'list' },
+      { key: 'allowAll', label: '允许所有人', type: 'bool', default: false },
+      { key: 'validateSignature', label: '校验回调签名', type: 'bool', default: true },
     ],
   },
   sms: {
@@ -148,6 +165,9 @@ export const PLATFORM_CATALOG = {
       { key: 'accountSid', label: 'Account SID', env: 'TWILIO_ACCOUNT_SID', required: true },
       { key: 'authToken', label: 'Auth Token', env: 'TWILIO_AUTH_TOKEN', secret: true, required: true },
       { key: 'phoneNumber', label: 'Twilio 号码', env: 'TWILIO_PHONE_NUMBER', required: true },
+      { key: 'allowedUsers', label: '允许的号码（逗号分隔）', type: 'list' },
+      { key: 'allowAll', label: '允许所有人', type: 'bool', default: false },
+      { key: 'validateSignature', label: '校验 Twilio 签名', type: 'bool', default: false },
     ],
   },
   whatsappcloud: {
@@ -157,6 +177,9 @@ export const PLATFORM_CATALOG = {
       { key: 'token', label: 'Meta 永久 token', secret: true, required: true },
       { key: 'appSecret', label: 'App Secret', secret: true, required: true },
       { key: 'verifyToken', label: 'Webhook verify token', required: true },
+      { key: 'allowedUsers', label: '允许的手机号（逗号分隔）', type: 'list' },
+      { key: 'allowAll', label: '允许所有人', type: 'bool', default: false },
+      { key: 'validateSignature', label: '校验回调签名', type: 'bool', default: true },
     ],
   },
   wecom: {
@@ -165,6 +188,9 @@ export const PLATFORM_CATALOG = {
     fields: [
       { key: 'botId', label: 'Bot ID', env: 'WECOM_BOT_ID', required: true },
       { key: 'secret', label: 'Secret', env: 'WECOM_SECRET', secret: true, required: true },
+      { key: 'websocketUrl', label: 'WebSocket URL（默认官方网关）' },
+      { key: 'allowedUsers', label: '允许的 user id（逗号分隔）', type: 'list' },
+      { key: 'allowAll', label: '允许所有人', type: 'bool', default: false },
     ],
   },
   teams: {
@@ -175,6 +201,8 @@ export const PLATFORM_CATALOG = {
       { key: 'clientSecret', label: 'Client Secret', env: 'TEAMS_CLIENT_SECRET', secret: true, required: true },
       { key: 'tenantId', label: 'Tenant ID' },
       { key: 'publicUrl', label: '公网回调地址' },
+      { key: 'allowedUsers', label: '允许的 user id（逗号分隔）', type: 'list' },
+      { key: 'allowAll', label: '允许所有人', type: 'bool', default: false },
     ],
   },
   dingtalk: {
@@ -183,6 +211,10 @@ export const PLATFORM_CATALOG = {
     fields: [
       { key: 'clientId', label: 'AppKey', env: 'DINGTALK_CLIENT_ID', required: true },
       { key: 'clientSecret', label: 'AppSecret', env: 'DINGTALK_CLIENT_SECRET', secret: true, required: true },
+      { key: 'allowedUsers', label: '允许的 user id（逗号分隔）', type: 'list' },
+      { key: 'allowAll', label: '允许所有人', type: 'bool', default: false },
+      { key: 'requireMention', label: '群聊需 @机器人', type: 'bool', default: true },
+      { key: 'freeResponseChats', label: '无需 @ 的会话（逗号分隔）', type: 'list' },
     ],
   },
   googlechat: {
@@ -191,6 +223,8 @@ export const PLATFORM_CATALOG = {
     fields: [
       { key: 'serviceAccountJson', label: '服务账号 JSON', secret: true, required: true },
       { key: 'botDisplayName', label: 'Bot 显示名（群 @提及 用）' },
+      { key: 'allowedUsers', label: '允许的 user id（逗号分隔）', type: 'list' },
+      { key: 'allowAll', label: '允许所有人', type: 'bool', default: false },
     ],
   },
   webhook: {
@@ -198,6 +232,7 @@ export const PLATFORM_CATALOG = {
     note: 'routes 为 JSON 数组：[{"path":"/github","secret":"s","prompt":"处理 {{payload}}","deliverUrl":""}]',
     fields: [
       { key: 'routes', label: '路由配置 JSON', type: 'json', default: [] },
+      { key: 'allowAll', label: '允许所有请求（每条路由自带 secret 鉴权）', type: 'bool', default: true },
     ],
   },
   a2a: {
@@ -206,6 +241,7 @@ export const PLATFORM_CATALOG = {
     fields: [
       { key: 'agentName', label: 'Agent 名', default: 'DSH Agent' },
       { key: 'bearerToken', label: 'Bearer token（空=仅回环）', secret: true },
+      { key: 'publicUrl', label: '公网回调地址' },
     ],
   },
   weixin: {
@@ -215,6 +251,9 @@ export const PLATFORM_CATALOG = {
     fields: [
       { key: 'accountId', label: 'Account ID', env: 'WEIXIN_ACCOUNT_ID' },
       { key: 'token', label: 'Token', env: 'WEIXIN_TOKEN', secret: true },
+      { key: 'baseUrl', label: 'API Base URL', default: 'https://ilinkai.weixin.qq.com' },
+      { key: 'allowedUsers', label: '允许的 user id（逗号分隔）', type: 'list' },
+      { key: 'allowAll', label: '允许所有人', type: 'bool', default: false },
     ],
   },
   bluebubbles: {
@@ -224,6 +263,8 @@ export const PLATFORM_CATALOG = {
       { key: 'serverUrl', label: '服务器 URL', env: 'BLUEBUBBLES_SERVER_URL', required: true },
       { key: 'password', label: '服务器密码', env: 'BLUEBUBBLES_PASSWORD', secret: true, required: true },
       { key: 'webhookUrl', label: '本机可达回调 URL' },
+      { key: 'allowedUsers', label: '允许的 user id（逗号分隔）', type: 'list' },
+      { key: 'allowAll', label: '允许所有人', type: 'bool', default: false },
     ],
   },
   'api-server': {
@@ -239,6 +280,10 @@ export const PLATFORM_CATALOG = {
     fields: [
       { key: 'appKey', label: 'App Key', env: 'YUANBAO_APP_KEY', required: true },
       { key: 'appSecret', label: 'App Secret', env: 'YUANBAO_APP_SECRET', secret: true, required: true },
+      { key: 'apiDomain', label: 'API 域名' },
+      { key: 'wsUrl', label: 'WebSocket URL' },
+      { key: 'allowedUsers', label: '允许的 user id（逗号分隔）', type: 'list' },
+      { key: 'allowAll', label: '允许所有人', type: 'bool', default: false },
     ],
   },
   simplex: {
@@ -248,6 +293,8 @@ export const PLATFORM_CATALOG = {
       { key: 'wsUrl', label: 'Daemon WS URL', env: 'SIMPLEX_WS_URL', default: 'ws://127.0.0.1:5225' },
       { key: 'autoAccept', label: '自动接受联系请求', type: 'bool', default: true },
       { key: 'groupAllowed', label: '允许的群（逗号分隔，* = 任意）', type: 'list' },
+      { key: 'allowedUsers', label: '允许的 user id（逗号分隔）', type: 'list' },
+      { key: 'allowAll', label: '允许所有人', type: 'bool', default: false },
     ],
   },
 }

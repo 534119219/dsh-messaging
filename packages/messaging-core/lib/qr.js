@@ -87,6 +87,22 @@ export function createQrManager(ctx, { logger, getAdapter }) {
     if (extra) Object.assign(t, extra)
   }
 
+  /** Merge new allowlist entries with the platform's existing ones. */
+  function mergeAllowedUsers(id, users) {
+    const existing = []
+    try {
+      const cur = ctx.settings.get(settingsNamespace(`messaging-${id}`))
+      if (cur && Array.isArray(cur.allowedUsers)) {
+        for (const u of cur.allowedUsers) existing.push(String(u))
+      }
+    } catch { /* ignore */ }
+    for (const u of users) {
+      const s = String(u).trim()
+      if (s && !existing.includes(s)) existing.push(s)
+    }
+    return existing
+  }
+
   // ------------------------------------------------------------ providers
 
   const providers = {
@@ -108,7 +124,7 @@ export function createQrManager(ctx, { logger, getAdapter }) {
         const userOpenid = String(d.user_openid || '')
         if (!appId || !clientSecret) throw new Error('qq bind completed but credentials are incomplete')
         const patch = { appId, clientSecret }
-        if (userOpenid) patch.allowedUsers = [userOpenid]
+        if (userOpenid) patch.allowedUsers = mergeAllowedUsers('qq', [userOpenid])
         await saveConfig('qq', patch)
         return { status: 'done', message: `✅ 授权成功（AppID ${appId}）`, extra: { userOpenid } }
       }
@@ -140,7 +156,9 @@ export function createQrManager(ctx, { logger, getAdapter }) {
         const confirmedBase = String(d.baseurl || ILINK_BASE_URL).replace(/\/+$/, '')
         const userId = String(d.ilink_user_id || '')
         if (!accountId || !token) throw new Error('weixin qr confirmed but credentials are incomplete')
-        await saveConfig('weixin', { accountId, token, baseUrl: confirmedBase, userId })
+        const patch = { accountId, token, baseUrl: confirmedBase }
+        if (userId) patch.allowedUsers = mergeAllowedUsers('weixin', [userId])
+        await saveConfig('weixin', patch)
         return { status: 'done', message: '✅ 微信授权成功', extra: { userId } }
       }
       if (status === 'expired') return { status: 'expired', message: '二维码已过期，请重新发起。' }
@@ -192,9 +210,9 @@ export function createQrManager(ctx, { logger, getAdapter }) {
 
   /** Start a QR flow; returns the client payload. */
   async function start(platform) {
-    const provider = providers[platform]
-    if (!provider) throw new Error(`platform ${platform} does not support QR authorization`)
-    const started = await provider[`${platform}Start`]()
+    const startFn = providers[`${platform}Start`]
+    if (typeof startFn !== 'function') throw new Error(`platform ${platform} does not support QR authorization`)
+    const started = await startFn()
     const t = task(started.taskId, { platform, secret: started.secret })
     t.qrData = started.qrData
     t.qrImage = await renderQr(started.qrData)
@@ -207,8 +225,9 @@ export function createQrManager(ctx, { logger, getAdapter }) {
     if (!t) return { ok: false, error: 'task not found' }
     if (t.status === 'done' || t.status === 'expired') return payload(t)
     try {
-      const provider = providers[t.platform]
-      const result = await provider[`${t.platform}Poll`](t.state.secret)
+      const pollFn = providers[`${t.platform}Poll`]
+      if (typeof pollFn !== 'function') throw new Error(`platform ${t.platform} has no QR poller`)
+      const result = await pollFn(t.state.secret)
       t.status = result.status
       t.message = result.message
       if (result.extra && result.extra.qrData) {

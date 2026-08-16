@@ -33,6 +33,9 @@ export function register(ctx) {
         prompt: z.string().default('处理 webhook 事件：{{payload}}'),
         deliverUrl: z.string().default(''),
       })).default([]),
+      // Each route carries its own secret auth; core allowlist must not block
+      // webhook events by default.
+      allowAll: z.boolean().default(true),
       homeChannel: z.string().default(''),
     }))
   } catch (error) {

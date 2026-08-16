@@ -594,6 +594,7 @@ export function apply(ctx) {
       platforms[id] = {
         label: meta.label,
         note: meta.note || '',
+        qr: Boolean(meta.qr),
         fields: meta.fields.map((f) => ({
           key: f.key,
           label: f.label,

@@ -79,6 +79,8 @@ export function register(ctx) {
   let disposed = false
   let reconnectTimer = null
   let retries = 0
+  /** Last applied credential pair, to detect QR-flow secret rotation. */
+  let lastCredentialKey = ''
 
   /** Live connection diagnostics, surfaced through /messaging/status. */
   const state = {
@@ -129,9 +131,24 @@ export function register(ctx) {
         logger.warn('qq: 未配置（settings messaging-qq.appId/clientSecret 或环境变量）')
         return
       }
+      lastCredentialKey = `${cfg.appId}:${cfg.clientSecret}`
       try {
         const token = await ensureToken()
-        const gatewayUrl = await fetchGateway(token)
+        let gatewayUrl
+        try {
+          gatewayUrl = await fetchGateway(token)
+        } catch (error) {
+          // 401 on the gateway with a cached token usually means the secret
+          // was rotated (e.g. by a QR bind flow) — refresh the token once.
+          if (String(error && error.message).includes('401')) {
+            accessToken = null
+            tokenExpiresAt = 0
+            const fresh = await ensureToken()
+            gatewayUrl = await fetchGateway(fresh)
+          } else {
+            throw error
+          }
+        }
         const s = new WebSocket(gatewayUrl)
         ws = s
         state.wsState = 'open'
@@ -258,6 +275,7 @@ export function register(ctx) {
   }
 
   const initial = resolveConfig()
+  lastCredentialKey = initial.appId && initial.clientSecret ? `${initial.appId}:${initial.clientSecret}` : ''
   if (initial.appId && initial.clientSecret) {
     adapter.connect().catch((error) => logger.error(`qq connect failed: ${error.stack || error.message}`))
   } else {
@@ -265,7 +283,33 @@ export function register(ctx) {
   }
   if (cfgScope && typeof cfgScope.watch === 'function') {
     cfgScope.watch((next) => {
-      if (next.appId && next.clientSecret && !ws) {
+      const key = next.appId && next.clientSecret ? `${next.appId}:${next.clientSecret}` : ''
+      const changed = key !== '' && key !== lastCredentialKey
+      if (changed) {
+        // Credentials changed (dialog save or QR bind rotation): drop the
+        // stale socket/token and reconnect with the new pair immediately.
+        lastCredentialKey = key
+        accessToken = null
+        tokenExpiresAt = 0
+        retries = 0
+        stopHeartbeat()
+        adapter.connected = false
+        state.wsState = 'reconnecting'
+        const s = ws
+        ws = null
+        if (s) {
+          try {
+            s.close()
+          } catch { /* ignore */ }
+        }
+        if (reconnectTimer) {
+          clearTimeout(reconnectTimer)
+          reconnectTimer = null
+        }
+        adapter.connect().catch((error) => logger.error(`qq reconnect after credential change failed: ${error.message}`))
+        return
+      }
+      if (next.appId && next.clientSecret && !ws && !changed) {
         adapter.connect().catch((error) => logger.error(`qq connect failed: ${error.stack || error.message}`))
       }
     })
