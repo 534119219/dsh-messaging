@@ -55,6 +55,11 @@ window.__ModuleLoader__.load({
       '.dshm-msg{font-size:12px;color:#3fb950}' +
       '.dshm-err{font-size:12px;color:#f2a1a1}' +
       '.dshm-close{background:none;border:none;color:var(--dsw-alias-label-secondary,#a8adba);font-size:18px;cursor:pointer;padding:2px 8px}' +
+      '.dshm-qr{display:flex;flex-direction:column;align-items:center;gap:12px;padding:24px 0;text-align:center}' +
+      '.dshm-qr img{background:#fff;border-radius:12px;padding:8px;image-rendering:pixelated}' +
+      '.dshm-qr-status{font-size:13px;color:var(--dsw-alias-label-primary,#e6e9f0);min-height:20px}' +
+      '.dshm-qr-actions{display:flex;gap:10px}' +
+      '.dshm-qr-start{margin-bottom:14px;border-color:#3b82f6;color:#7ab0ff}' +
       '</style>';
 
     if (!document.querySelector("[data-dsh-msg-css]")) {
@@ -151,7 +156,7 @@ window.__ModuleLoader__.load({
       }
 
       var initialForm = {};
-      var redactedKeys = {};
+      var initialRedacted = {};
       if (meta) {
         for (var fi = 0; fi < meta.fields.length; fi += 1) {
           var f = meta.fields[fi];
@@ -159,7 +164,7 @@ window.__ModuleLoader__.load({
           var isRedacted = existing && typeof existing === "object" && existing.__redacted__;
           if (f.secret && isRedacted) {
             initialForm[f.key] = "";
-            redactedKeys[f.key] = true;
+            initialRedacted[f.key] = true;
           } else if (f.type === "list") {
             initialForm[f.key] = Array.isArray(existing) ? existing : [];
           } else if (f.type === "bool") {
@@ -177,14 +182,103 @@ window.__ModuleLoader__.load({
       }
 
       var formState = useState(initialForm);
+      var redactedState = useState(initialRedacted);
       var form = formState[0];
       var setForm = formState[1];
+      var redactedKeys = redactedState[0];
+      var setRedacted = redactedState[1];
       var noticeState = useState(null);
       var notice = noticeState[0];
       var setNotice = noticeState[1];
       var savingState = useState(false);
       var saving = savingState[0];
       var setSaving = savingState[1];
+      var qrState = useState(null); // null | { taskId, status, message, qrImage }
+      var qr = qrState[0];
+      var setQr = qrState[1];
+      var qrBusyState = useState(false);
+      var qrBusy = qrBusyState[0];
+      var setQrBusy = qrBusyState[1];
+
+      // Re-sync the form whenever the server payload changes (manual save or
+      // QR auth saved new credentials server-side).
+      useEffect(function () {
+        var rebuilt = {};
+        var redone = {};
+        if (meta) {
+          for (var i = 0; i < meta.fields.length; i += 1) {
+            var field = meta.fields[i];
+            var existing = current[field.key];
+            var isRedacted = existing && typeof existing === "object" && existing.__redacted__;
+            if (field.secret && isRedacted) {
+              rebuilt[field.key] = "";
+              redone[field.key] = true;
+            } else if (field.type === "list") {
+              rebuilt[field.key] = Array.isArray(existing) ? existing : [];
+            } else if (field.type === "bool") {
+              rebuilt[field.key] = existing === undefined || existing === null ? Boolean(field.default) : Boolean(existing);
+            } else if (field.type === "number") {
+              rebuilt[field.key] = existing === undefined || existing === null ? (field.default === null ? "" : field.default) : existing;
+            } else if (field.type === "json") {
+              rebuilt[field.key] = existing === undefined || existing === null ? (field.default || []) : existing;
+            } else if (field.secret) {
+              rebuilt[field.key] = isRedacted ? "" : (existing || "");
+            } else {
+              rebuilt[field.key] = existing === undefined || existing === null ? (field.default === null ? "" : field.default) : existing;
+            }
+          }
+        }
+        setForm(rebuilt);
+        setRedacted(redone);
+      }, [payload]);
+
+      // Poll the QR task while one is active; stops on done/expired/error.
+      useEffect(function () {
+        if (!qr || !qr.taskId) return;
+        var stopped = false;
+        var timer = setInterval(function () {
+          if (stopped) return;
+          fetch("/messaging/qr/status?task=" + encodeURIComponent(qr.taskId), { headers: { accept: "application/json" } })
+            .then(function (r) { return r.json(); })
+            .then(function (json) {
+              if (stopped || !json || !json.ok) return;
+              if (json.status === "done") {
+                stopped = true;
+                clearInterval(timer);
+                setQr({ taskId: json.taskId, status: "done", message: json.message, qrImage: json.qrImage });
+                if (onSaved) onSaved();
+                setTimeout(function () { setQr(null); }, 2500);
+              } else if (json.status === "expired" || json.status === "error") {
+                stopped = true;
+                clearInterval(timer);
+                setQr({ taskId: json.taskId, status: json.status, message: json.message, qrImage: json.qrImage });
+              } else {
+                setQr({ taskId: json.taskId, status: json.status, message: json.message, qrImage: json.qrImage });
+              }
+            })
+            .catch(function () { /* keep polling */ });
+        }, 2500);
+        return function () { stopped = true; clearInterval(timer); };
+      }, [qr && qr.taskId]);
+
+      function startQr() {
+        if (!meta || !meta.qr || qrBusy || qr) return;
+        setQrBusy(true);
+        setNotice(null);
+        fetch("/messaging/qr/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ platform: platformId }),
+        }).then(function (r) { return r.json(); }).then(function (json) {
+          if (json && json.ok) {
+            setQr({ taskId: json.taskId, status: "pending", message: "等待扫码…", qrImage: json.qrImage });
+          } else {
+            setNotice("发起扫码失败：" + ((json && json.error) || "未知错误"));
+          }
+        }).catch(function (e) {
+          setNotice("发起扫码失败：" + String(e && e.message ? e.message : e));
+        }).finally(function () { setQrBusy(false); });
+      }
 
       function setField(key, value) {
         var next = {};
@@ -246,7 +340,7 @@ window.__ModuleLoader__.load({
                   key: id,
                   className: "dshm-plat",
                   "data-active": String(isActive),
-                  onClick: function () { setPlatformId(id); setNotice(null); },
+                  onClick: function () { setPlatformId(id); setNotice(null); setQr(null); },
                 },
                   h("span", { className: "dshm-dot", style: { background: dotColor } }),
                   h("span", null, payload.platforms[id].label)
@@ -261,22 +355,40 @@ window.__ModuleLoader__.load({
                       meta.note || "",
                       h("span", { style: { marginLeft: 8 } }, connected ? "● 已连接" : "○ 未连接")
                     ),
-                    meta.fields.map(function (field) {
-                      return h("div", { key: field.key, className: "dshm-field" },
-                        h("div", { className: "dshm-label" },
-                          field.label + (field.required ? " *" : "") + (field.secret ? "（秘密字段）" : "")
-                        ),
-                        h(FieldInput, {
-                          field: field,
-                          value: form[field.key],
-                          redacted: Boolean(redactedKeys[field.key]),
-                          setValue: function (v) { setField(field.key, v); },
-                        })
-                      );
-                    }),
-                    notice
-                      ? h("div", { className: notice.indexOf("失败") >= 0 ? "dshm-err" : "dshm-msg" }, notice)
-                      : null
+                    qr
+                      ? h("div", { className: "dshm-qr" },
+                          qr.qrImage
+                            ? h("img", { src: qr.qrImage, alt: "扫码授权", width: 240, height: 240 })
+                            : null,
+                          h("div", { className: "dshm-qr-status" }, qr.message || "…"),
+                          (qr.status === "expired" || qr.status === "error")
+                            ? h("div", { className: "dshm-qr-actions" },
+                                h("button", { className: "dshm-btn", onClick: function () { setQr(null); } }, "关闭"),
+                                h("button", { className: "dshm-btn", "data-primary": "true", onClick: startQr }, "重新发起"))
+                            : h("button", { className: "dshm-btn", onClick: function () { setQr(null); } }, "取消")
+                        )
+                      : h("div", null,
+                          meta.qr
+                            ? h("button", { className: "dshm-btn dshm-qr-start", onClick: startQr, disabled: qrBusy },
+                                qrBusy ? "发起中…" : "📱 扫码授权")
+                            : null,
+                          meta.fields.map(function (field) {
+                            return h("div", { key: field.key, className: "dshm-field" },
+                              h("div", { className: "dshm-label" },
+                                field.label + (field.required ? " *" : "") + (field.secret ? "（秘密字段）" : "")
+                              ),
+                              h(FieldInput, {
+                                field: field,
+                                value: form[field.key],
+                                redacted: Boolean(redactedKeys[field.key]),
+                                setValue: function (v) { setField(field.key, v); },
+                              })
+                            );
+                          }),
+                          notice
+                            ? h("div", { className: notice.indexOf("失败") >= 0 ? "dshm-err" : "dshm-msg" }, notice)
+                            : null
+                        )
                   )
             )
           ),
@@ -329,7 +441,9 @@ window.__ModuleLoader__.load({
               setPlatformId: function (id) { platformId = id; renderDialog(); },
               payload: payload,
               status: status,
-              onSaved: function () { reloadStatus().then(renderDialog); },
+              onSaved: function () {
+                Promise.all([reload(), reloadStatus()]).then(renderDialog);
+              },
               onClose: function () {
                 if (dialogRoot !== null) {
                   dialogRoot.unmount();

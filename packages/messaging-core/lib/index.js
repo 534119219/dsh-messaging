@@ -23,6 +23,7 @@ import { createOutboundRouter } from './outbound.js'
 import { registerMessagingTools } from './tools.js'
 import { renderForCapability, markdownToHtml } from './markdown.js'
 import { createWebhookServer } from './http.js'
+import { createQrManager } from './qr.js'
 import { PLATFORM_CATALOG } from './config.js'
 // Platform adapters live inside this single plugin (consolidated from the
 // former per-platform Cordis bundles); each module registers its settings
@@ -528,6 +529,58 @@ export function apply(ctx) {
       logger.info('messaging config endpoint ready at /messaging/config (web server)')
     } catch (error) {
       logger.warn(`webServer config route failed: ${error.message}`)
+    }
+  }
+
+  // ---- QR scan-to-authorize endpoints (web server, same-origin, fenced) ----
+  const qrManager = createQrManager(ctx, { logger, getAdapter: (id) => adapters.get(id) })
+  const qrRoute = {
+    kind: 'prefix',
+    path: '/messaging/qr',
+    handler: async (req, res) => {
+      if (!isTrustedApiRequest(req, webServerTrustedHosts(ctx))) {
+        res.writeHead(403, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ ok: false, error: 'forbidden' }))
+        return
+      }
+      try {
+        const url = new URL(req.url || '', 'http://localhost')
+        if (req.method === 'POST' && url.pathname.endsWith('/start')) {
+          const chunks = []
+          for await (const chunk of req) chunks.push(chunk)
+          const body = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}')
+          const platform = String((body && body.platform) || '')
+          const started = await qrManager.start(platform)
+          res.writeHead(200, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ ok: true, ...started }))
+          return
+        }
+        if (req.method === 'GET' && url.pathname.endsWith('/status')) {
+          const task = url.searchParams.get('task')
+          if (!task) {
+            res.writeHead(400, { 'Content-Type': 'application/json' })
+            res.end(JSON.stringify({ ok: false, error: 'missing task' }))
+            return
+          }
+          const result = await qrManager.status(task)
+          res.writeHead(result.ok ? 200 : 404, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify(result))
+          return
+        }
+        res.writeHead(405)
+        res.end()
+      } catch (error) {
+        res.writeHead(400, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ ok: false, error: String(error && error.message ? error.message : error) }))
+      }
+    },
+  }
+  if (webServer && typeof webServer.register === 'function') {
+    try {
+      webServer.register(qrRoute)
+      logger.info('messaging qr endpoints ready at /messaging/qr (web server)')
+    } catch (error) {
+      logger.warn(`webServer qr route failed: ${error.message}`)
     }
   }
 

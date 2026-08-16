@@ -96,7 +96,8 @@ export const PLATFORM_CATALOG = {
   },
   whatsapp: {
     label: 'WhatsApp',
-    note: '启用后查看 dsh web 日志中的配对二维码（WhatsApp → 已链接的设备 扫码）；非官方协议有封号风险',
+    note: '扫码配对后即可使用（WhatsApp → 已链接的设备）；非官方协议有封号风险',
+    qr: true,
     fields: [
       { key: 'enabled', label: '启用', type: 'bool', default: true },
       { key: 'allowedUsers', label: '允许的手机号（逗号分隔）', type: 'list' },
@@ -122,6 +123,7 @@ export const PLATFORM_CATALOG = {
   qq: {
     label: 'QQ 机器人',
     note: '前置：q.qq.com 注册机器人并开通 C2C/群消息 intent；加粗/列表等格式需开通原生 MD（被动 MD 需单独申请）',
+    qr: true,
     fields: [
       { key: 'appId', label: 'App ID', env: 'QQ_APP_ID', required: true },
       { key: 'clientSecret', label: 'Client Secret', env: 'QQ_CLIENT_SECRET', secret: true, required: true },
@@ -208,7 +210,8 @@ export const PLATFORM_CATALOG = {
   },
   weixin: {
     label: '微信个人号（iLink）',
-    note: '推荐用 node weixin-pair.mjs 扫码配对自动写入；非官方协议有风险',
+    note: '点击"扫码授权"用微信扫码自动配对；非官方协议有风险',
+    qr: true,
     fields: [
       { key: 'accountId', label: 'Account ID', env: 'WEIXIN_ACCOUNT_ID' },
       { key: 'token', label: 'Token', env: 'WEIXIN_TOKEN', secret: true },

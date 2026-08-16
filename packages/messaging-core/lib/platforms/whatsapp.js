@@ -68,6 +68,8 @@ export function register(ctx) {
   let reconnectTimer = null
   /** Our recently sent message ids, for group reply-to-bot detection. */
   const recentSentIds = new Set()
+  /** Latest Baileys pairing QR (surfaced through the QR auth flow). */
+  const pairState = { qr: '', at: 0 }
 
   const adapter = {
     id: 'whatsapp',
@@ -81,11 +83,19 @@ export function register(ctx) {
       maxMessageLength: 60000,
     },
     resolveConfig,
+    /** Current pairing QR payload for the QR auth flow. */
+    qrInfo() {
+      return pairState.qr ? { qr: pairState.qr, at: pairState.at } : null
+    },
+    /** Force-connect for pairing even before the adapter is enabled. */
+    startPairing() {
+      return adapter.connect({ force: true })
+    },
 
-    async connect() {
+    async connect(opts = {}) {
       if (sock || connecting || disposed) return
       const cfg = resolveConfig()
-      if (!cfg.enabled) {
+      if (!cfg.enabled && !(opts && opts.force)) {
         logger.warn('whatsapp: 未启用（settings messaging-whatsapp.enabled = true）')
         return
       }
@@ -187,6 +197,8 @@ export function register(ctx) {
   async function handleConnectionUpdate(s, update) {
     const { qr, connection, lastDisconnect } = update
     if (qr) {
+      pairState.qr = qr
+      pairState.at = Date.now()
       try {
         const ascii = await QRCode.toString(qr, { type: 'terminal', small: true })
         logger.warn(`whatsapp 配对二维码（用 WhatsApp → 已链接的设备 扫码）：\n${ascii}`)
@@ -196,6 +208,7 @@ export function register(ctx) {
       return
     }
     if (connection === 'open') {
+      pairState.qr = ''
       myJid = s.user && s.user.id ? normalizePhone(s.user.id) + '@s.whatsapp.net' : null
       adapter.connected = true
       logger.info(`whatsapp connected (${s.user ? s.user.id : 'unknown'})`)
