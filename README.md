@@ -85,4 +85,4 @@ packages/messaging-core/
 
 ## 鸣谢
 
-协议与交互语义参考 [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)。
+协议与交互语义参考 [NousResearch/hermes-agent](https://github.com/NousResearch/hermes-agent)（MIT License, Copyright (c) 2025 Nous Research），衍生部分的归属声明见 [NOTICE](NOTICE)。

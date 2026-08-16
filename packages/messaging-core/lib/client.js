@@ -502,7 +502,6 @@ window.__ModuleLoader__.load({
           // (the original's width comes from the parent's align-items).
           host.style.cssText = "display:flex;flex-direction:column;align-items:stretch;min-height:0";
           anchor.parentNode.insertBefore(host, anchor.nextSibling);
-          var collapsed = isCollapsed(button);
           // House-style messaging icon: a filled chat bubble with a tail,
           // drawn in the same 16x16 currentColor silhouette language as the
           // app's icons (the bundled "send" glyph is actually an up arrow).
@@ -520,13 +519,29 @@ window.__ModuleLoader__.load({
             svg.appendChild(path);
             return svg;
           }
+          // Signature of everything we mirror from the template: label span
+          // presence + icon size. render() no-ops unless it actually changed,
+          // so unrelated sidebar class flips (rail/fading/quiet/hover) never
+          // rebuild the trigger — that rebuild churn is what caused the icon
+          // to twitch during the collapse animation.
+          function templateSignature(tpl) {
+            if (!tpl) return "none";
+            var svg = tpl.querySelector("svg");
+            return (tpl.querySelector("span") !== null ? "L" : "-") + ":" + (svg ? (svg.getAttribute("width") || "") : "");
+          }
+          var lastSignature = null;
           var render = function () {
+            var tpl = findNewSessionButton();
+            var signature = templateSignature(tpl);
+            if (signature === lastSignature) return;
+            lastSignature = signature;
             // Plain-DOM render: React roots reject native DOM nodes, so the
             // trigger is managed directly inside the host container.
-            while (host.firstChild) host.removeChild(host.firstChild);
-            // Clone the native New Session button so the entry inherits its
-            // exact look, layout, and collapsed-rail behavior.
-            var tpl = findNewSessionButton();
+            // The template button's own structure is the truth: when the app
+            // renders its label span (wide sidebar), ours shows text too; when
+            // the app removes it (collapsed rail), ours hides it — the label
+            // appears on the same commit as the New Session button.
+            var hasLabel = tpl !== null && tpl.querySelector("span") !== null;
             var el = null;
             if (tpl !== null) {
               try {
@@ -537,10 +552,10 @@ window.__ModuleLoader__.load({
               // Fallback: plain styled button.
               el = document.createElement("button");
               el.type = "button";
-              el.appendChild(buildMessageIcon(collapsed ? 18 : 14));
+              el.appendChild(buildMessageIcon(hasLabel ? 14 : 18));
               var fallbackLabel = document.createElement("span");
               fallbackLabel.textContent = "消息平台";
-              if (collapsed) fallbackLabel.style.display = "none";
+              if (!hasLabel) fallbackLabel.style.display = "none";
               el.appendChild(fallbackLabel);
               el.style.cssText = "box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:6px;height:38px;margin:0 2px 8px;padding:8px 16px;border:1px solid var(--dsw-alias-border-l2,#3a3f4b);border-radius:12px;font-size:14px;font-weight:500;line-height:22px;cursor:pointer;background:var(--dsw-alias-interactive-bg,#1d2230);color:inherit";
             } else {
@@ -584,21 +599,39 @@ window.__ModuleLoader__.load({
             }
             el.setAttribute("data-dsh-msg-trigger", "");
             el.onclick = openDialog;
-            host.appendChild(el);
+            // Replace in place (never wipe the host): a brief empty host would
+            // collapse the row and cause visible layout jump/twitch.
+            if (host.firstChild) host.replaceChild(el, host.firstChild);
+            else host.appendChild(el);
           };
           render();
           var rootEl = host && host.parentElement;
           if (rootEl !== null && rootEl !== undefined && typeof MutationObserver !== "undefined") {
             collapseObserver = new MutationObserver(function () {
               if (disposed) return;
-              if (!document.contains(button)) return;
-              var next = isCollapsed(button);
-              if (next !== collapsed) {
-                collapsed = next;
-                render();
+              var tpl = findNewSessionButton();
+              if (tpl === null || !document.contains(tpl)) return;
+              if (tpl !== button) {
+                // Template replaced by the app — re-bind and watch the new one.
+                button = tpl;
+                try {
+                  collapseObserver.observe(button, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "width", "height"] });
+                } catch (e) { /* ignore */ }
               }
+              // Re-render on every relevant mutation (signature-gated): the
+              // template's structure at this moment is already the app's
+              // committed render, so our label appears/disappears on exactly
+              // the same commit as the New Session button's label.
+              render();
             });
-            collapseObserver.observe(rootEl, { attributes: true, attributeFilter: ["class"], subtree: true });
+            // Narrow targets: the template button's own structure changes
+            // (label span add/remove, icon width/height) are the only signals
+            // we mirror. The root childList watch exists solely to re-bind if
+            // the app replaces the template button element.
+            if (button !== null) {
+              collapseObserver.observe(button, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "width", "height"] });
+            }
+            collapseObserver.observe(rootEl, { childList: true, subtree: true });
           }
         }
 
