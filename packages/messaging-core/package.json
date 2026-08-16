@@ -1,0 +1,60 @@
+{
+  "name": "messaging-core",
+  "version": "0.1.0",
+  "description": "DSH messaging gateway core: platform adapter registry, chat-to-session mapping, outbound session/event routing, authorization, and messaging tools.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": []
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-agent": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-llm": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-session": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-settings": "^0.1.0-rc.6",
+    "@deepseek-ai/dsh-tools": "^0.1.0-rc.6"
+  },
+  "dependencies": {
+    "@larksuiteoapi/node-sdk": "^1.73.0",
+    "@line/bot-sdk": "^11.0.0",
+    "@slack/socket-mode": "^1.3.6",
+    "@slack/web-api": "^7.8.0",
+    "@whiskeysockets/baileys": "^6.7.24",
+    "botbuilder": "^4.23.0",
+    "dingtalk-stream": "https://registry.npmjs.org/dingtalk-stream/-/dingtalk-stream-2.1.6-beta.1.tgz",
+    "discord.js": "^14.16.0",
+    "google-auth-library": "^11.0.0",
+    "grammy": "^1.35.0",
+    "home-assistant-js-websocket": "^9.0.0",
+    "imapflow": "^1.0.0",
+    "irc-framework": "^4.14.0",
+    "jose": "^6.0.0",
+    "matrix-js-sdk": "^41.9.0",
+    "nodemailer": "^9.0.0",
+    "pino": "^10.0.0",
+    "qrcode": "^1.5.4",
+    "schemastery": "^3.18.0",
+    "ws": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

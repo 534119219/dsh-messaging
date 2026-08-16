@@ -1,0 +1,4 @@
+# messaging-core bundle patch
+- insert:
+    - id: messaging-core
+      name: 'messaging-core'
