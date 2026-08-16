@@ -232,7 +232,7 @@ window.__ModuleLoader__.load({
         }
         setForm(rebuilt);
         setRedacted(redone);
-      }, [payload]);
+      }, [payload, platformId]);
 
       // Poll the QR task while one is active; stops on done/expired/error.
       useEffect(function () {
