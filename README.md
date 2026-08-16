@@ -12,6 +12,12 @@
 - **配置界面**：侧栏「消息平台」入口（与「新建会话」同款按钮），hermes 式两栏弹窗（左侧平台列表，右侧配置表单），配置走 `/messaging/config` 端点持久化
 - **共享 Webhook 监听器**：webhook 型平台共用 HTTP listener（默认 `127.0.0.1:8765`）
 
+## 截图
+
+![侧栏消息平台入口](assets/sidebar.png)
+
+![消息平台配置弹窗](assets/dialog.png)
+
 ## 安装（web profile）
 
 在 profile 的 `package.json` 中添加依赖，并将 `messaging-core` 加入 `dsh.profile.bundles`：
