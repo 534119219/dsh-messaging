@@ -61,7 +61,15 @@ window.__ModuleLoader__.load({
       '.dshm-qr img{background:#fff;border-radius:12px;padding:8px;image-rendering:pixelated}' +
       '.dshm-qr-status{font-size:13px;color:var(--dsw-alias-label-primary,#e6e9f0);min-height:20px}' +
       '.dshm-qr-actions{display:flex;gap:10px}' +
+      '.dshm-qr-link{font-size:12px;color:var(--dsw-alias-brand-primary,#7ab0ff);text-decoration:none}' +
       '.dshm-qr-start{margin-bottom:14px;border-color:var(--dsw-alias-brand-primary,#3b82f6);color:var(--dsw-alias-brand-primary,#7ab0ff)}' +
+      '@media (max-width:720px){' +
+      '.dshm-box{width:100vw;width:100dvw;height:100vh;height:100dvh;max-height:none;border-radius:0;border-left:none;border-right:none;border-bottom:none}' +
+      '.dshm-body{flex-direction:column}' +
+      '.dshm-list{width:100%;flex:none;border-right:none;border-bottom:1px solid var(--dsw-alias-border-l1,#262b36);display:flex;overflow-x:auto;padding:8px;gap:6px}' +
+      '.dshm-plat{width:auto;flex:none;margin-bottom:0;white-space:nowrap}' +
+      '.dshm-content{padding:12px 14px}' +
+      '}' +
       '</style>';
 
     if (!document.querySelector("[data-dsh-msg-css]")) {
@@ -363,6 +371,10 @@ window.__ModuleLoader__.load({
                             ? h("img", { src: qr.qrImage, alt: "扫码授权", width: 240, height: 240 })
                             : null,
                           h("div", { className: "dshm-qr-status" }, qr.message || "…"),
+                          qr.qrData
+                            ? h("a", { className: "dshm-qr-link", href: qr.qrData, target: "_blank", rel: "noreferrer" },
+                                "手机打不开？点此打开链接")
+                            : null,
                           (qr.status === "expired" || qr.status === "error")
                             ? h("div", { className: "dshm-qr-actions" },
                                 h("button", { className: "dshm-btn", onClick: function () { setQr(null); } }, "关闭"),
